@@ -10,14 +10,17 @@
 <body>
     <div class="chart-container">
         <!-- Info Bar at the top of the chart to display next item -->
-<div id="info-bar" class="info-bar">
-    <h3>Next Item:</h3>
-    <p id="next-item-id">Event ID: N/A</p>
-    <p id="next-item-name">Item SKU: N/A</p>
-    <img id="next-item-image" src="" alt="Item Image 1" style="display:none; float:left; margin-right: 10px; width: 100px; height: 75px;">
-    <img id="next-item-image-2" src="" alt="Item Image 2" style="display:none; float:left; width: 100px; height: 75px;">
-</div>
+        <div id="info-bar" class="info-bar">
+            <h3>Next Item:</h3>
+            <p id="next-item-id">Event ID: N/A</p>
+            <p id="next-item-name">Item SKU: N/A</p>
 
+            <!-- Image container that holds the images -->
+            <div class="image-container">
+                <img id="next-item-image" src="" alt="Item Image 1" style="display:none; width: 100px; height: 75px;">
+                <img id="next-item-image-2" src="" alt="Item Image 2" style="display:none; width: 100px; height: 75px;">
+            </div>
+        </div>
 
         <!-- Chart itself -->
         <svg id="chart"></svg>
