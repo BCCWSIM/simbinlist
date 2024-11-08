@@ -45,7 +45,6 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSTUrVA_ilFUgKBcUBRoEd2q
 
     // Preload the first item's images first and load the rest afterward
     preloadFirstItemImages(data);
-
 });
 
 // Function to preload the first item's images first, and cache all images
