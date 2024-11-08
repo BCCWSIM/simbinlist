@@ -16,9 +16,11 @@ body {
     font-size: 18px;  /* Slightly larger font size */
     color: #333;
     cursor: default;  /* Set cursor to default to avoid any hover interactions */
-    display: inline-block;
-    width: 100%;  /* Make it full width */
-    text-align: center;  /* Center all the content inside the info bar */
+    display: flex;  /* Flexbox layout */
+    flex-direction: column;  /* Stack the elements vertically */
+    align-items: center;  /* Center all items horizontally */
+    text-align: center;  /* Center all text inside the info-bar */
+    width: 100%;
 }
 
 .info-bar h3 {
@@ -44,14 +46,17 @@ body {
     color: black;  /* Black for the SKU name */
 }
 
-/* Image styles */
+/* Container for the images, also center them alongside the text */
+.info-bar .image-container {
+    display: flex; /* Align images side by side */
+    justify-content: center; /* Center the images horizontally */
+    gap: 10px; /* Space between the images */
+    margin-top: 10px;
+}
+
 .info-bar img {
     max-width: 200px;  /* Set a maximum size for the image */
     height: 150px;
-    margin-top: 10px;
-    display: block;  /* Make sure the image is treated as a block-level element */
-    margin-left: auto;  /* Center horizontally */
-    margin-right: auto; /* Center horizontally */
     object-fit: contain;  /* Ensure the image keeps its aspect ratio */
 }
 
