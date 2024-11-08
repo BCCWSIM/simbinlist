@@ -205,7 +205,7 @@
         function updateNextItemInfo(data) {
             if (data.length > 0) {
                 var nextItem = data[0];  // Get the first remaining item
-                d3.select("#next-item-id").text("ID: " + nextItem.id);
+                d3.select("#next-item-id").text(nextItem.id);
                 d3.select("#next-item-name").text(nextItem.name);
                 var imgElement = d3.select("#next-item-image");
                 imgElement.attr("src", nextItem.image);  // Set the image URL
