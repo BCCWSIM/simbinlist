@@ -44,6 +44,10 @@
             font-size: 24px;  /* Larger font size for the SKU name */
             color: black;  /* Black for the SKU name */
         }
+        .info-bar img {
+            max-width: 200px;  /* Set a maximum size for the image */
+            margin-top: 10px;
+        }
 
         .bar {
             fill: steelblue;
@@ -82,6 +86,7 @@
             <h3>Next Item:</h3>
             <p id="next-item-id">Event ID: N/A</p>
             <p id="next-item-name">Item SKU: N/A</p>
+            <img id="next-item-image" src="" alt="Item Image" style="display:none;">  <!-- Image element -->
         </div>
 
         <!-- Chart itself -->
@@ -125,6 +130,7 @@
                 return {
                     id: d['Event ID'],  // Event ID for x-axis
                     name: d['Item SKU'], // SKU name for y-axis
+                    image: d['Image'], // Image link for the next item display
                     start: new Date(d['Start Date']),
                     end: new Date(d['End Date'])
                 };
@@ -189,15 +195,9 @@
                 .attr("y", function(d) { return y(d.name); }) // Position bars based on SKU
                 .attr("width", x.bandwidth()) // Set bar width based on the Event ID space
                 .attr("height", y.bandwidth()) // Set bar height based on SKU height
-                .attr("rx", 5) // Round the corners of the bars
-                .attr("fill", function(d) { return color(d.name); }) // Use the color scale
-                .on("click", function(d) {
-                    // Filter out the clicked item and update the chart
-                    data = data.filter(function(e) { return e.id !== d.id; });
-                    drawChart(data);  // Redraw the chart with the updated data
-                    updateNextItemInfo(data);  // Update the next item info
-                    div.style("opacity", 0); // Hide the tooltip
-                })
+                .style("fill", function(d, i) { return color(i); });
+
+            svg.selectAll(".bar")
                 .on("mouseover", function(d) {      
                     div.transition()        
                         .duration(200)      
@@ -205,7 +205,7 @@
                     div.html(d.id + "<br/>" + d.name)  
                         .style("left", (d3.event.pageX) + "px")     
                         .style("top", (d3.event.pageY - 28) + "px");    
-                    })                  
+                })                  
                 .on("mouseout", function(d) {       
                     div.transition()        
                         .duration(500)      
@@ -216,11 +216,15 @@
         function updateNextItemInfo(data) {
             if (data.length > 0) {
                 var nextItem = data[0];  // Get the first remaining item
-                d3.select("#next-item-id").text("ID: " + nextItem.id);
-                d3.select("#next-item-name").text(nextItem.name);
+                d3.select("#next-item-id").text("Event ID: " + nextItem.id);
+                d3.select("#next-item-name").text("Item SKU: " + nextItem.name);
+                var imgElement = d3.select("#next-item-image");
+                imgElement.attr("src", nextItem.image);  // Set the image URL
+                imgElement.style("display", "block");   // Make sure the image is displayed
             } else {
-                d3.select("#next-item-id").text("ID: N/A");
-                d3.select("#next-item-name").text("N/A");
+                d3.select("#next-item-id").text("Event ID: N/A");
+                d3.select("#next-item-name").text("Item SKU: N/A");
+                d3.select("#next-item-image").style("display", "none");  // Hide the image if no more items
             }
         }
     </script>
