@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D3 Gantt Chart</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <style>
@@ -8,7 +10,7 @@
             font-family: Arial, sans-serif;
         }
         .chart-container {
-            text-align: center; /* Center the chart */
+            text-align: center;
         }
         .info-bar {
             background-color: #f0f8ff;
@@ -18,21 +20,22 @@
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             font-size: 16px;
             color: #333;
+            cursor: pointer;  /* Make the info bar clickable */
         }
         .info-bar h3 {
             margin: 0;
         }
         .bar {
             fill: steelblue;
-            stroke: none; /* No border by default */
+            stroke: none;
         }
         .bar:hover {
-            fill: lightsteelblue; /* Lighter color on hover */
-            stroke: orange; /* Orange border on hover */
-            stroke-width: 2px; /* Border width on hover */
+            fill: lightsteelblue;
+            stroke: orange;
+            stroke-width: 2px;
         }
         .axis text {
-            font: 10px sans-serif; /* This changes the font of the labels */
+            font: 10px sans-serif;
         }
         .row-bg {
             fill: none;
@@ -109,6 +112,16 @@
 
             drawChart(data);
             updateNextItemInfo(data);  // Update the "next" item info when the chart is drawn
+
+            // Add click event to the info bar to remove the next item
+            d3.select("#info-bar").on("click", function() {
+                var nextItem = data[0];  // Get the first remaining item
+                if (nextItem) {
+                    data = data.filter(function(d) { return d.id !== nextItem.id; });
+                    drawChart(data);  // Redraw the chart
+                    updateNextItemInfo(data);  // Update the next item info
+                }
+            });
         });
 
         function drawChart(data) {
@@ -159,8 +172,10 @@
                 .attr("rx", 5) // Round the corners of the bars
                 .attr("fill", function(d) { return color(d.name); }) // Use the color scale
                 .on("click", function(d) {
+                    // Filter out the clicked item and update the chart
                     data = data.filter(function(e) { return e.id !== d.id; });
-                    drawChart(data);  // Redraw the chart when a bar is clicked
+                    drawChart(data);  // Redraw the chart with the updated data
+                    updateNextItemInfo(data);  // Update the next item info
                     div.style("opacity", 0); // Hide the tooltip
                 })
                 .on("mouseover", function(d) {      
@@ -178,20 +193,16 @@
                 });
         }
 
-        // Function to update the "next item" display
         function updateNextItemInfo(data) {
-            // Get the first item (could be dynamic based on a certain time or criteria)
-            var nextItem = data[0]; // For example, take the first item from the list
-
-            // Update the info bar with the next item's Event ID and SKU
-            d3.select("#next-item-id").text("ID: " + nextItem.id);
-            d3.select("#next-item-name").text(nextItem.name);
+            if (data.length > 0) {
+                var nextItem = data[0];  // Get the first remaining item
+                d3.select("#next-item-id").text("Event ID: " + nextItem.id);
+                d3.select("#next-item-name").text(nextItem.name);
+            } else {
+                d3.select("#next-item-id").text("ID: N/A");
+                d3.select("#next-item-name").text("N/A");
+            }
         }
-
-        // Make sure the chart resizes when the window is resized
-        window.onresize = function() {
-            drawChart(data);
-        };
     </script>
 </body>
 </html>
