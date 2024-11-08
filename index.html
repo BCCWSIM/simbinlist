@@ -8,6 +8,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            user-select: none; /* Prevent any text selection on the page */
         }
         .chart-container {
             text-align: center;
@@ -20,7 +21,7 @@
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
             font-size: 18px;  /* Slightly larger font size */
             color: #333;
-            cursor: pointer;  /* Make the info bar clickable */
+            cursor: default;  /* Set cursor to default to avoid any hover interactions */
             display: inline-block;
             width: 100%;  /* Make it full width */
             text-align: center;
@@ -47,16 +48,14 @@
         .info-bar img {
             max-width: 200px;  /* Set a maximum size for the image */
             margin-top: 10px;
+            display: block;  /* Ensure the image is treated as a block-level element */
+            margin-left: auto;
+            margin-right: auto; /* Center the image horizontally */
         }
 
         .bar {
             fill: steelblue;
             stroke: none;
-        }
-        .bar:hover {
-            fill: lightsteelblue;
-            stroke: orange;
-            stroke-width: 2px;
         }
         .axis text {
             font: 10px sans-serif;
@@ -76,6 +75,11 @@
             border: 0px;
             border-radius: 8px;
             pointer-events: none;
+        }
+
+        /* Prevent selection of any text or elements */
+        svg {
+            pointer-events: none;  /* Disable all mouse interaction with the chart */
         }
     </style>
 </head>
@@ -196,21 +200,6 @@
                 .attr("width", x.bandwidth()) // Set bar width based on the Event ID space
                 .attr("height", y.bandwidth()) // Set bar height based on SKU height
                 .style("fill", function(d, i) { return color(i); });
-
-            svg.selectAll(".bar")
-                .on("mouseover", function(d) {      
-                    div.transition()        
-                        .duration(200)      
-                        .style("opacity", .9);      
-                    div.html(d.id + "<br/>" + d.name)  
-                        .style("left", (d3.event.pageX) + "px")     
-                        .style("top", (d3.event.pageY - 28) + "px");    
-                })                  
-                .on("mouseout", function(d) {       
-                    div.transition()        
-                        .duration(500)      
-                        .style("opacity", 0);   
-                });
         }
 
         function updateNextItemInfo(data) {
