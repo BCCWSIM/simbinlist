@@ -4,6 +4,24 @@
     <title>D3 Gantt Chart</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .chart-container {
+            text-align: center; /* Center the chart */
+        }
+        .info-bar {
+            background-color: #f0f8ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 16px;
+            color: #333;
+        }
+        .info-bar h3 {
+            margin: 0;
+        }
         .bar {
             fill: steelblue;
             stroke: none; /* No border by default */
@@ -35,7 +53,17 @@
     </style>
 </head>
 <body>
-    <svg id="chart"></svg>
+    <div class="chart-container">
+        <!-- Info Bar at the top of the chart to display next item -->
+        <div id="info-bar" class="info-bar">
+            <h3>Next Item:</h3>
+            <p id="next-item-id">Event ID: N/A</p>
+            <p id="next-item-name">Item SKU: N/A</p>
+        </div>
+
+        <!-- Chart itself -->
+        <svg id="chart"></svg>
+    </div>
 
     <script>
         var margin = {top: 20, right: 20, bottom: 30, left: 100},
@@ -80,6 +108,7 @@
             });
 
             drawChart(data);
+            updateNextItemInfo(data);  // Update the "next" item info when the chart is drawn
         });
 
         function drawChart(data) {
@@ -147,6 +176,16 @@
                         .duration(500)      
                         .style("opacity", 0);   
                 });
+        }
+
+        // Function to update the "next item" display
+        function updateNextItemInfo(data) {
+            // Get the first item (could be dynamic based on a certain time or criteria)
+            var nextItem = data[0]; // For example, take the first item from the list
+
+            // Update the info bar with the next item's Event ID and SKU
+            d3.select("#next-item-id").text("ID: " + nextItem.id);
+            d3.select("#next-item-name").text(nextItem.name);
         }
 
         // Make sure the chart resizes when the window is resized
