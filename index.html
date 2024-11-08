@@ -13,18 +13,38 @@
             text-align: center;
         }
         .info-bar {
-            background-color: #f0f8ff;
-            padding: 15px;
+            background-color: #f0f8ff;  /* Light blue background */
+            padding: 20px;
             margin-bottom: 20px;
             border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            font-size: 16px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+            font-size: 18px;  /* Slightly larger font size */
             color: #333;
             cursor: pointer;  /* Make the info bar clickable */
+            display: inline-block;
+            width: 100%;  /* Make it full width */
+            text-align: center;
         }
         .info-bar h3 {
             margin: 0;
+            font-size: 22px;  /* Make the heading a bit larger */
+            font-weight: bold;
+            color: #1976d2;  /* Blue color for the heading */
         }
+        .info-bar p {
+            margin: 5px 0;
+            font-size: 20px;  /* Larger text for IDs and SKU */
+            font-weight: bold;  /* Bold text */
+        }
+        .info-bar p#next-item-id {
+            font-size: 24px;  /* Larger font size for the ID */
+            color: orange;  /* Orange for Event ID */
+        }
+        .info-bar p#next-item-name {
+            font-size: 24px;  /* Larger font size for the SKU name */
+            color: black;  /* Black for the SKU name */
+        }
+
         .bar {
             fill: steelblue;
             stroke: none;
