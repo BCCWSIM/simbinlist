@@ -36,44 +36,88 @@ d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSTUrVA_ilFUgKBcUBRoEd2q
         return {
             id: d['Event ID'],  // Event ID for x-axis
             name: d['Item SKU'], // SKU name for y-axis
-            image: d['Image'], // Image link for the next item display
+            image: d['ImageItem'], // Image link for first image display
+            imageLocation: d['ImageLocation'], // Image link for second image display
             start: new Date(d['Start Date']),
             end: new Date(d['End Date'])
         };
     });
 
-    // Preload all images and cache them
-    preloadImages(data);
+    // Preload the first item's images first and load the rest afterward
+    preloadFirstItemImages(data);
 
-    drawChart(data);
-    updateNextItemInfo(data);  // Update the "next" item info when the chart is drawn
-
-    // Add click event to the info bar to remove the next item
-    d3.select("#info-bar").on("click", function() {
-        var nextItem = data[0];  // Get the first remaining item
-        if (nextItem) {
-            data = data.filter(function(d) { return d.id !== nextItem.id; });
-            drawChart(data);  // Redraw the chart
-            updateNextItemInfo(data);  // Update the next item info
-        }
-    });
 });
+
+// Function to preload the first item's images first, and cache all images
+function preloadFirstItemImages(data) {
+    var firstItem = data[0];  // Get the first item
+    var img1 = new Image();
+    var img2 = new Image();
+
+    // Load the first image (ImageItem) for the first item
+    img1.src = firstItem.image;
+    img1.onload = function() {
+        imageCache[firstItem.id] = imageCache[firstItem.id] || {};  // Initialize cache for this item if not already
+        imageCache[firstItem.id].image = img1;  // Cache the first image for the first item
+        checkFirstItemLoaded();
+    };
+    img1.onerror = function() {
+        imageCache[firstItem.id] = imageCache[firstItem.id] || {};
+        imageCache[firstItem.id].image = null;  // Cache null if image fails to load
+        checkFirstItemLoaded();
+    };
+
+    // Load the second image (ImageLocation) for the first item
+    img2.src = firstItem.imageLocation;
+    img2.onload = function() {
+        imageCache[firstItem.id] = imageCache[firstItem.id] || {};  // Initialize cache for this item if not already
+        imageCache[firstItem.id].imageLocation = img2;  // Cache the second image for the first item
+        checkFirstItemLoaded();
+    };
+    img2.onerror = function() {
+        imageCache[firstItem.id] = imageCache[firstItem.id] || {};
+        imageCache[firstItem.id].imageLocation = null;  // Cache null if image fails to load
+        checkFirstItemLoaded();
+    };
+    
+    // Function to check if both images for the first item are loaded
+    function checkFirstItemLoaded() {
+        if (imageCache[firstItem.id]?.image && imageCache[firstItem.id]?.imageLocation) {
+            isFirstImageLoaded = true;
+            // After first item images are loaded, preload images for all other items
+            preloadImages(data);
+            drawChart(data);
+            updateNextItemInfo(data);
+        }
+    }
+}
 
 // Function to preload all images and store them in the cache
 function preloadImages(data) {
     data.forEach(function(d) {
-        var img = new Image();
-        img.src = d.image; // Set the source URL of the image
-        img.onload = function() {
-            imageCache[d.id] = img;  // Cache the image when it's fully loaded
-            if (!isFirstImageLoaded) {
-                // Once the first image is loaded, mark the flag as true
-                isFirstImageLoaded = true;
-                updateNextItemInfo(data);  // Update display after the first image is loaded
-            }
+        var img1 = new Image();
+        var img2 = new Image();
+
+        // Preload the first image (ImageItem)
+        img1.src = d.image;
+        img1.onload = function() {
+            imageCache[d.id] = imageCache[d.id] || {};  // Initialize cache for this item if not already
+            imageCache[d.id].image = img1;  // Cache the first image
         };
-        img.onerror = function() {
-            imageCache[d.id] = null;  // If the image fails to load, store null
+        img1.onerror = function() {
+            imageCache[d.id] = imageCache[d.id] || {};
+            imageCache[d.id].image = null;  // Cache null if image fails to load
+        };
+
+        // Preload the second image (ImageLocation)
+        img2.src = d.imageLocation;
+        img2.onload = function() {
+            imageCache[d.id] = imageCache[d.id] || {};  // Initialize cache for this item if not already
+            imageCache[d.id].imageLocation = img2;  // Cache the second image
+        };
+        img2.onerror = function() {
+            imageCache[d.id] = imageCache[d.id] || {};
+            imageCache[d.id].imageLocation = null;  // Cache null if image fails to load
         };
     });
 }
@@ -133,23 +177,60 @@ function updateNextItemInfo(data) {
         d3.select("#next-item-name").text(nextItem.name);
 
         var imgElement = d3.select("#next-item-image");
-        var imgUrl = nextItem.image;
+        var imgElement2 = d3.select("#next-item-image-2");
 
-        if (isFirstImageLoaded) {
-            // Check if the image is already cached and display it immediately
-            if (imageCache[nextItem.id]) {
-                imgElement.attr("src", imageCache[nextItem.id].src);  // Use the cached image
-                imgElement.style("display", "block");  // Display the image immediately
-            } else {
-                imgElement.style("display", "none");  // Hide the image if not cached or failed to load
+        // Preload and display images only after the first item images have been loaded
+        var img1 = imageCache[nextItem.id]?.image;
+        var img2 = imageCache[nextItem.id]?.imageLocation;
+
+        // Function to display the images after both are loaded
+        function displayImages() {
+            if (img1 && img2) {
+                imgElement.attr("src", img1.src);
+                imgElement.style("display", "block");
+
+                imgElement2.attr("src", img2.src);
+                imgElement2.style("display", "block");
             }
+        }
+
+        // Wait for both images to load
+        if (img1 && img2) {
+            displayImages();
         } else {
-            // If the first image is not loaded, just hide the image element
-            imgElement.style("display", "none");
+            // Check if both images are loaded
+            var loadedImages = 0;
+            if (img1) loadedImages++;
+            if (img2) loadedImages++;
+
+            if (loadedImages === 2) {
+                displayImages();
+            } else {
+                // Wait for both images to be loaded
+                var checkInterval = setInterval(function() {
+                    if (imageCache[nextItem.id]?.image && imageCache[nextItem.id]?.imageLocation) {
+                        clearInterval(checkInterval);
+                        displayImages();
+                    }
+                }, 100);  // Check every 100ms until both images are loaded
+            }
         }
     } else {
         d3.select("#next-item-id").text("ID: N/A");
         d3.select("#next-item-name").text("N/A");
-        d3.select("#next-item-image").style("display", "none");  // Hide the image if no more items
+        d3.select("#next-item-image").style("display", "none");  // Hide the first image if no more items
+        d3.select("#next-item-image-2").style("display", "none");  // Hide the second image if no more items
     }
 }
+
+// Add click event to the info bar to remove the next item
+d3.select("#info-bar").on("click", function() {
+    if (data.length > 0) {
+        var nextItem = data[0];  // Get the first remaining item
+        data = data.filter(function(d) { return d.id !== nextItem.id; });
+        // Update the image cache after an item is removed
+        delete imageCache[nextItem.id];
+        drawChart(data);  // Redraw the chart
+        updateNextItemInfo(data);  // Update the next item info
+    }
+});
