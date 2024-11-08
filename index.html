@@ -216,14 +216,14 @@
         function updateNextItemInfo(data) {
             if (data.length > 0) {
                 var nextItem = data[0];  // Get the first remaining item
-                d3.select("#next-item-id").text("Event ID: " + nextItem.id);
-                d3.select("#next-item-name").text("Item SKU: " + nextItem.name);
+                d3.select("#next-item-id").text("ID: " + nextItem.id);
+                d3.select("#next-item-name").text(nextItem.name);
                 var imgElement = d3.select("#next-item-image");
                 imgElement.attr("src", nextItem.image);  // Set the image URL
                 imgElement.style("display", "block");   // Make sure the image is displayed
             } else {
-                d3.select("#next-item-id").text("Event ID: N/A");
-                d3.select("#next-item-name").text("Item SKU: N/A");
+                d3.select("#next-item-id").text("ID: N/A");
+                d3.select("#next-item-name").text("N/A");
                 d3.select("#next-item-image").style("display", "none");  // Hide the image if no more items
             }
         }
