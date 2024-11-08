@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Gantt Chart</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+            stroke: none; /* No border by default */
+        }
+        .bar:hover {
+            fill: lightsteelblue; /* Lighter color on hover */
+            stroke: orange; /* Orange border on hover */
+            stroke-width: 2px; /* Border width on hover */
+        }
+        .axis text {
+            font: 10px sans-serif; /* This changes the font of the labels */
+        }
+        .row-bg {
+            fill: none;
+            stroke: lightgray;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 28px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .button-container {
+            text-align: center; /* Center the buttons */
+        }
+    </style>
+</head>
+<body>
+    <div class="button-container">
+        <button onclick="filter('Day')">Day</button>
+        <button onclick="filter('3 Day')">3 Day</button>
+        <button onclick="filter('Week')">Week</button>
+        <button onclick="filter('Month')">Month</button>
+        <button onclick="filter('All')">All</button>
+    </div>
+    <svg id="chart"></svg>
+
+    <script>
+        var margin = {top: 20, right: 20, bottom: 30, left: 100},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var x = d3.scaleBand().range([0, width]), // x scale for Event ID (horizontal axis)
+            y = d3.scaleBand().range([height, 0]).padding(0.1); // y scale for SKU (vertical axis)
+
+        var svg = d3.select("#chart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var xAxis = d3.axisBottom(x).tickSize(0), // Format the x-axis to show only Event IDs
+            yAxis = d3.axisLeft(y).tickSize(0); // Format the y-axis to show Item SKU names
+
+        var data;
+
+        // Define a color scale
+        var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+        // Define the div for the tooltip
+        var div = d3.select("body").append("div")   
+            .attr("class", "tooltip")               
+            .style("opacity", 0);
+
+        // Load the CSV file from Google Sheets
+        d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSTUrVA_ilFUgKBcUBRoEd2qshCNtOxW_WWhdggIsNGYWauvwhkkuK916imGfPVWJqmbuCnCPFR83DR/pub?output=csv").then(function(contents) {
+            data = contents.map(function(d) {
+                return {
+                    id: d['Event ID'],  // Event ID for x-axis
+                    name: d['Item SKU'], // SKU name for y-axis
+                    start: new Date(d['Start Date']),
+                    end: new Date(d['End Date'])
+                };
+            });
+
+            drawChart(data, 'All');
+        });
+
+        function drawChart(data, filter) {
+            svg.selectAll("*").remove();
+
+            // Determine the unique Event IDs for the x-axis and SKU names for the y-axis
+            var eventIds = data.map(function(d) { return d.id; });
+            var skuNames = data.map(function(d) { return d.name; });
+
+            // Set domains for the scales
+            x.domain(eventIds); // Set the x-axis domain to the unique Event IDs
+            y.domain(skuNames); // Set the y-axis domain to the unique SKU names
+
+            // Create the x-axis for Event ID (horizontal axis)
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x).tickFormat(function(d) { return d; }))  // Only show Event ID as label
+                .call(g => g.select(".domain").remove()); // Remove the x-axis line
+
+            // Create the y-axis for SKU names (vertical axis)
+            svg.append("g")
+                .call(d3.axisLeft(y))
+                .call(g => g.select(".domain").remove()); // Remove the y-axis line
+
+            // Add alternating background colors to the rows
+            svg.selectAll(".row-bg")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "row-bg")
+                .attr("x", function(d) { return x(d.id); }) // Position based on Event ID
+                .attr("y", function(d) { return y(d.name); }) // Position based on SKU
+                .attr("width", x.bandwidth()) // Bar width based on Event ID space
+                .attr("height", y.bandwidth()) // Bar height based on SKU height
+                .attr("fill", function(d, i) { return i % 2 ? "#eee" : "#fff"; }); // Alternating row colors
+
+            svg.selectAll(".bar")
+                .data(data)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function(d) { return x(d.id); }) // Position bars based on Event ID
+                .attr("y", function(d) { return y(d.name); }) // Position bars based on SKU
+                .attr("width", function(d) { return x(d.id) + x.bandwidth() - x(d.id); }) // Bar width
+                .attr("height", y.bandwidth()) // Height is based on SKU height
+                .attr("rx", 5) // Round the corners of the bars
+                .attr("fill", function(d) { return color(d.name); }) // Use the color scale
+                .on("click", function(d) {
+                    data = data.filter(function(e) { return e.id !== d.id; });
+                    drawChart(data, filter);
+                    div.style("opacity", 0); // Hide the tooltip when a bar is clicked
+                })
+                .on("mouseover", function(d) {      
+                    div.transition()        
+                        .duration(200)      
+                        .style("opacity", .9);      
+                    div.html(d.id + "<br/>" + d.name)  
+                        .style("left", (d3.event.pageX) + "px")     
+                        .style("top", (d3.event.pageY - 28) + "px");    
+                    })                  
+                .on("mouseout", function(d) {       
+                    div.transition()        
+                        .duration(500)      
+                        .style("opacity", 0);   
+                });
+        }
+
+        function filter(period) {
+            drawChart(data, period);
+        }
+    </script>
+</body>
+</html>
+
