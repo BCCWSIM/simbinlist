@@ -32,19 +32,9 @@
             border-radius: 8px;
             pointer-events: none;
         }
-        .button-container {
-            text-align: center; /* Center the buttons */
-        }
     </style>
 </head>
 <body>
-    <div class="button-container">
-        <button onclick="filter('Day')">Day</button>
-        <button onclick="filter('3 Day')">3 Day</button>
-        <button onclick="filter('Week')">Week</button>
-        <button onclick="filter('Month')">Month</button>
-        <button onclick="filter('All')">All</button>
-    </div>
     <svg id="chart"></svg>
 
     <script>
@@ -85,10 +75,10 @@
                 };
             });
 
-            drawChart(data, 'All');
+            drawChart(data);
         });
 
-        function drawChart(data, filter) {
+        function drawChart(data) {
             svg.selectAll("*").remove();
 
             // Determine the unique Event IDs for the x-axis and SKU names for the y-axis
@@ -133,7 +123,7 @@
                 .attr("fill", function(d) { return color(d.name); }) // Use the color scale
                 .on("click", function(d) {
                     data = data.filter(function(e) { return e.id !== d.id; });
-                    drawChart(data, filter);
+                    drawChart(data);
                     div.style("opacity", 0); // Hide the tooltip when a bar is clicked
                 })
                 .on("mouseover", function(d) {      
@@ -150,11 +140,6 @@
                         .style("opacity", 0);   
                 });
         }
-
-        function filter(period) {
-            drawChart(data, period);
-        }
     </script>
 </body>
 </html>
-
