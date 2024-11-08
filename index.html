@@ -196,7 +196,7 @@
         function updateNextItemInfo(data) {
             if (data.length > 0) {
                 var nextItem = data[0];  // Get the first remaining item
-                d3.select("#next-item-id").text("Event ID: " + nextItem.id);
+                d3.select("#next-item-id").text("ID: " + nextItem.id);
                 d3.select("#next-item-name").text(nextItem.name);
             } else {
                 d3.select("#next-item-id").text("ID: N/A");
