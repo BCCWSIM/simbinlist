@@ -4,7 +4,7 @@ body {
 }
 
 .chart-container {
-    text-align: center;
+    text-align: center;  /* Ensure the chart container is centered */
 }
 
 .info-bar {
@@ -18,7 +18,7 @@ body {
     cursor: default;  /* Set cursor to default to avoid any hover interactions */
     display: inline-block;
     width: 100%;  /* Make it full width */
-    text-align: center;
+    text-align: center;  /* Center all the content inside the info bar */
 }
 
 .info-bar h3 {
@@ -44,13 +44,15 @@ body {
     color: black;  /* Black for the SKU name */
 }
 
+/* Image styles */
 .info-bar img {
     max-width: 200px;  /* Set a maximum size for the image */
     height: 150px;
     margin-top: 10px;
-    display: block;  /* Ensure the image is treated as a block-level element */
-    margin-left: auto;
-    margin-right: auto; /* Center the image horizontally */
+    display: block;  /* Make sure the image is treated as a block-level element */
+    margin-left: auto;  /* Center horizontally */
+    margin-right: auto; /* Center horizontally */
+    object-fit: contain;  /* Ensure the image keeps its aspect ratio */
 }
 
 .bar {
@@ -69,7 +71,7 @@ body {
 
 .tooltip {
     position: absolute;
-    text-align: center;
+    text-align: center; 
     width: 120px;
     height: 28px;
     padding: 2px;
