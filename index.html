@@ -5,27 +5,305 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D3 Gantt Chart</title>
     <script src="https://d3js.org/d3.v5.min.js"></script>
-    <link rel="stylesheet" href="styles.css"> <!-- Link to the external CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* General Styles */
+        html {
+            height: 100%;
+            font-family: "Inconsolata", "Arial", sans-serif;
+            text-align: center;
+            background: #EDEDED;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+
+        /* Info Bar Styles */
+        .info-bar {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.19);
+            font-size: 18px;  
+            color: #333;
+            display: flex;  
+            flex-direction: column;  
+            align-items: center;  
+            width: 100%;
+            max-width: 800px;
+            user-select: none; 
+            cursor: pointer;
+        }
+
+        /* Heading and Paragraph Styles */
+        .info-bar h3 {
+            margin: 0;
+            font-size: 22px;  
+            font-weight: bold;
+            color: #1976d2;  
+        }
+
+        .info-bar p {
+            margin: 5px 0;
+            font-size: 20px;  
+            font-weight: bold;  
+        }
+
+        .info-bar p#next-item-id,
+        .info-bar p#next-item-name {
+            font-size: 24px;  
+        }
+
+        .info-bar p#next-item-id {
+            color: orange;  
+        }
+
+        .info-bar p#next-item-name {
+            color: black;  
+        }
+
+        /* Image Container */
+        .info-bar .image-container {
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            margin-top: 10px;
+        }
+
+        .info-bar img {
+            max-width: 200px;  
+            height: 200px;
+            object-fit: contain;  
+            border-radius: 8px; 
+        }
+
+        /* Search Box */
+        .search-box {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 80%;
+            max-width: 300px;
+            font-size: 16px;
+        }
+
+        /* Chart Styles */
+        .bar {
+            fill: steelblue;
+            stroke: none;
+        }
+
+        .axis text {
+            font: 10px sans-serif;
+        }
+
+        /* SVG Styles */
+        svg {
+            display: block; 
+            margin: 0 auto; 
+            max-width: 600px; /* Limit the width of the chart */
+            width: 100%; /* Make it responsive within the max width */
+        }
+    </style>
 </head>
 <body>
     <div class="chart-container">
-        <!-- Info Bar at the top of the chart to display next item -->
         <div id="info-bar" class="info-bar">
             <h3>Next Item:</h3>
-            <p id="next-item-id">Event ID: N/A</p>
-            <p id="next-item-name">Item SKU: N/A</p>
-
-            <!-- Image container that holds the images -->
+            <input type="text" id="search-input" class="search-box" placeholder="Search ID">
+            <p id="next-item-id"></p>
+            <p id="next-item-name"></p>
             <div class="image-container">
                 <img id="next-item-image" src="" alt="Item Image 1" style="display:none;">
                 <img id="next-item-image-2" src="" alt="Item Image 2" style="display:none;">
             </div>
         </div>
 
-        <!-- Chart itself -->
         <svg id="chart"></svg>
     </div>
 
-    <script src="script.js"></script> <!-- Link to the external JavaScript -->
+    <script>
+        var margin = {top: 20, right: 20, bottom: 30, left: 100},
+            height = 500 - margin.top - margin.bottom;
+
+        function getWidth() {
+            return Math.min(window.innerWidth - margin.left - margin.right, 600); // Limit width to a maximum of 600px
+        }
+
+        var x = d3.scaleBand().range([0, getWidth()]),
+            y = d3.scaleBand().range([height, 0]).padding(0.1);
+
+        var svg = d3.select("#chart")
+            .attr("width", getWidth())
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var data;
+        var imageCache = {};
+        var currentIndex = 0;
+
+        d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSTUrVA_ilFUgKBcUBRoEd2qshCNtOxW_WWhdggIsNGYWauvwhkkuK916imGfPVWJqmbuCnCPFR83DR/pub?output=csv").then(function(contents) {
+            data = contents.map(function(d) {
+                return {
+                    id: d['Event ID'].toLowerCase(),
+                    originalId: d['Event ID'],
+                    name: d['Item SKU'],
+                    image: d['ImageItem'],
+                    imageLocation: d['ImageLocation'],
+                    start: new Date(d['Start Date']),
+                    end: new Date(d['End Date'])
+                };
+            });
+
+            preloadImages(data);
+            drawChart(data);
+            updateNextItemInfo(data);
+        });
+
+        function preloadImages(data) {
+            data.forEach(function(d) {
+                var img1 = new Image();
+                var img2 = new Image();
+
+                img1.src = d.image;
+                img1.onload = function() {
+                    imageCache[d.originalId] = imageCache[d.originalId] || {};
+                    imageCache[d.originalId].image = img1;
+                };
+
+                img2.src = d.imageLocation;
+                img2.onload = function() {
+                    imageCache[d.originalId] = imageCache[d.originalId] || {};
+                    imageCache[d.originalId].imageLocation = img2;
+                };
+            });
+        }
+
+        function drawChart(dataToDisplay) {
+            svg.selectAll("*").remove();
+            var eventIds = dataToDisplay.map(function(d) { return d.originalId; });
+            var skuNames = dataToDisplay.map(function(d) { return d.name; });
+
+            x.domain(eventIds);
+            y.domain(skuNames);
+
+            svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x).tickFormat(function(d) { return d; }))
+                .call(g => g.select(".domain").remove());
+
+            svg.append("g")
+                .call(d3.axisLeft(y))
+                .call(g => g.select(".domain").remove());
+
+            svg.selectAll(".bar")
+                .data(dataToDisplay)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function(d) { return x(d.originalId); })
+                .attr("y", function(d) { return y(d.name); })
+                .attr("width", x.bandwidth())
+                .attr("height", y.bandwidth())
+                .on("click", function(event, d) {
+                    currentIndex = data.indexOf(d); // Update index on bar click
+                    updateNextItemInfo(data);
+                });
+        }
+
+        function updateNextItemInfo(data) {
+            if (data.length > 0) {
+                document.getElementById("next-item-id").textContent = data[currentIndex].originalId;
+                document.getElementById("next-item-name").textContent = data[currentIndex].name;
+
+                var img1 = document.getElementById("next-item-image");
+                var img2 = document.getElementById("next-item-image-2");
+
+                img1.src = data[currentIndex].image;
+                img2.src = data[currentIndex].imageLocation;
+
+                img1.style.display = "block";
+                img2.style.display = "block";
+
+                // Filter data to show only current and subsequent items
+                var subsequentItems = data.slice(currentIndex);
+                drawChart(subsequentItems);
+            } else {
+                document.getElementById("next-item-id").textContent = "Event ID: N/A";
+                document.getElementById("next-item-name").textContent = "Item SKU: N/A";
+                document.getElementById("next-item-image").style.display = "none";
+                document.getElementById("next-item-image-2").style.display = "none";
+            }
+        }
+
+        document.getElementById("search-input").addEventListener("input", function() {
+            var searchId = this.value.toLowerCase();
+            var foundItem = data.find(item => item.id === searchId);
+
+            if (foundItem) {
+                currentIndex = data.indexOf(foundItem);
+                updateNextItemInfo(data);
+            } else {
+                // Reset if no match is found
+                document.getElementById("next-item-id").textContent = "Event ID: N/A";
+                document.getElementById("next-item-name").textContent = "Item SKU: N/A";
+                document.getElementById("next-item-image").style.display = "none";
+                document.getElementById("next-item-image-2").style.display = "none";
+            }
+        });
+
+        // Clear the search input when clicking away
+        document.addEventListener("click", function(event) {
+            var searchInput = document.getElementById("search-input");
+            if (event.target !== searchInput) {
+                searchInput.value = "";
+            }
+        });
+
+        // Add click event listeners for next and previous navigation
+        document.getElementById("info-bar").onclick = function(event) {
+            // Ignore clicks if the search box is focused
+            if (document.activeElement === document.getElementById("search-input")) {
+                return;
+            }
+
+            var barWidth = this.clientWidth;
+            var clickX = event.clientX - this.getBoundingClientRect().left;
+
+            if (clickX < barWidth / 2) {
+                // Click on the left side
+                currentIndex = (currentIndex > 0) ? currentIndex - 1 : data.length - 1;
+            } else {
+                // Click on the right side
+                currentIndex = (currentIndex < data.length - 1) ? currentIndex + 1 : 0;
+            }
+
+            updateNextItemInfo(data);
+        };
+
+        // Adjust the chart size on window resize
+        window.addEventListener("resize", function() {
+            svg.attr("width", getWidth());
+            drawChart(data.slice(currentIndex));  // Redraw chart for current and subsequent items
+        });
+    </script>
 </body>
 </html>
